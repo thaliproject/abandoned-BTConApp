@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft. All Rights Reserved. Licensed under the MIT License. See license.txt in the project root for further information.
 package org.thaliproject.p2p.btconapp;
 
+import android.app.Application;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -21,8 +25,15 @@ import java.util.Random;
 
 public class MainActivity extends ActionBarActivity implements BTConnector.Callback {
 
-    MainActivity that = this;
+    /*
+        For End-to-End testing we can use timer here to Stop the process
+        for example after 1 minute.
+        The value is determined by mExitWithDelay
+        */
+    private int mExitWithDelay = 60; // 60 seconds test before exiting
+    private boolean mExitWithDelayIsOn = true; // set false if we are not uisng this app for testing
 
+    MainActivity that = this;
     MyTextSpeech mySpeech = null;
 
     int sendMessageCounter = 0;
@@ -46,9 +57,28 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     Runnable mStatusChecker = new Runnable() {
         @Override
         public void run() {
+
             // call function to update timer
             timeCounter = timeCounter + 1;
-            ((TextView) findViewById(R.id.TimeBox)).setText("T: " + timeCounter);
+            String timeShow = "T: " + timeCounter;
+
+            if(mExitWithDelayIsOn) {
+                //exit timer for testing
+                if (mExitWithDelay > 0) {
+                    mExitWithDelay = mExitWithDelay - 1;
+                    timeShow = timeShow + ", S: " + mExitWithDelay;
+                } else {
+                    if(mBTConnector != null) {
+                        mBTConnector.Stop();
+                        mBTConnector = null;
+                    }
+                    mExitWithDelayIsOn = false;
+                    ShowSummary();
+                }
+            }
+
+
+            ((TextView) findViewById(R.id.TimeBox)).setText(timeShow);
             timeHandler.postDelayed(mStatusChecker, mInterval);
         }
     };
@@ -94,9 +124,12 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         btButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mExitWithDelayIsOn = false;
+                print_line("Debug","Exit with delay is set OFF");
                 if(mBTConnector != null){
                     mBTConnector.Stop();
                     mBTConnector = null;
+                    ShowSummary();
                 }else{
                     mBTConnector = new BTConnector(that,that);
                     mBTConnector.Start();
@@ -107,14 +140,31 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         timeHandler = new Handler();
         mStatusChecker.run();
 
-        //for demo
+        //for demo & testing to keep lights on
         final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         this.mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
         this.mWakeLock.acquire();
 
+        // would need to make sure here that BT & Wifi both are on !!
+        WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        if(!wifiManager.isWifiEnabled()) {
+            wifiManager.setWifiEnabled(false);
+        }
+        BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+        if(!bluetooth.isEnabled()){
+            bluetooth.enable();
+        }
         //create & start connector
         mBTConnector = new BTConnector(this,this);
         mBTConnector.Start();
+    }
+
+    public void ShowSummary(){
+
+        if(mTestDataFile != null){
+            Intent intent = new Intent(getBaseContext(), DebugSummaryActivity.class);
+            startActivity(intent);
+        }
     }
 
     @Override

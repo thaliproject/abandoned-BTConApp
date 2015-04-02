@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">BtConApp</string>
+    <string name="data_summary">Data summary</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
 

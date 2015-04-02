@@ -25,6 +25,13 @@ public class TestDataFile {
     long State4 = 0; // GotData   , 2
     long State5 = 0; // GoBigtData, 3
 
+    long State2tmp = 0; // Connecting, 0
+    long State3tmp = 0; // Connected , 1
+    long State4tmp = 0; // GotData   , 2
+    long State5tmp = 0; // GoBigtData, 3
+
+
+
     enum TimeForState{
         FoundPeers,
         Connecting,
@@ -33,7 +40,6 @@ public class TestDataFile {
         GoBigtData
     }
 
-
     private File dbgFile;
     private OutputStream dbgFileOs;
     private MainActivity context;
@@ -41,6 +47,7 @@ public class TestDataFile {
     public TestDataFile(MainActivity Context){
         this.context = Context;
     }
+
 
     public void StartNewFile(){
         Time t= new Time();
@@ -74,28 +81,82 @@ public class TestDataFile {
     }
 
     void SetTimeNow(TimeForState state){
+
+        DebugDataApp dda = (DebugDataApp)this.context.getApplicationContext();
+        DebugDataApp.DebugSummary mDebugSummary = dda.getSummary();
+
         switch(state){
             case FoundPeers:
                 ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xffffff00);
                 State1 = System.currentTimeMillis(); // Connecting
+                mDebugSummary.State1Count = mDebugSummary.State1Count + 1;
                 break;
             case Connecting:
                 ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xffff0000);
                 State2 = System.currentTimeMillis(); // Connecting
+                long dbgtime2 = (State2 - State1);
+                if(mDebugSummary.State2Max < dbgtime2){
+                    mDebugSummary.State2Max = dbgtime2;
+                }
+                if(mDebugSummary.State2Min > dbgtime2){
+                    mDebugSummary.State2Min = dbgtime2;
+                }
+                mDebugSummary.State2Count = mDebugSummary.State2Count + 1;
+
+                State2tmp = State2tmp  + dbgtime2;
+                mDebugSummary.State2Avg = (State2tmp / mDebugSummary.State2Count);
+
                 break;
             case Connected:
                 ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xff00ff00);
                 State3 = System.currentTimeMillis(); // Connected
+                long dbgtime3 = (State3 - State2);
+                if(mDebugSummary.State3Max < dbgtime3){
+                    mDebugSummary.State3Max = dbgtime3;
+                }
+                if(mDebugSummary.State3Min > dbgtime3){
+                    mDebugSummary.State3Min = dbgtime3;
+                }
+                mDebugSummary.State3Count = mDebugSummary.State3Count + 1;
+
+                State3tmp = State3tmp  + dbgtime3;
+                mDebugSummary.State3Avg = (State3tmp / mDebugSummary.State3Count);
                 break;
             case GotData:
                 ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xff0000ff);
                 State4 = System.currentTimeMillis(); // GotData
+
+                long dbgtime4 = (State4 - State3);
+                if(mDebugSummary.State4Max < dbgtime4){
+                    mDebugSummary.State4Max = dbgtime4;
+                }
+                if(mDebugSummary.State4Min > dbgtime4){
+                    mDebugSummary.State4Min = dbgtime4;
+                }
+                mDebugSummary.State4Count = mDebugSummary.State4Count + 1;
+
+                State4tmp = State4tmp  + dbgtime4;
+                mDebugSummary.State4Avg = (State4tmp / mDebugSummary.State4Count);
                 break;
             case GoBigtData:
                 ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xffffffff);
                 State5 = System.currentTimeMillis(); // GoBigtData
+
+                long dbgtime5 = (State5 - State4);
+                if(mDebugSummary.State5Max < dbgtime5){
+                    mDebugSummary.State5Max = dbgtime5;
+                }
+                if(mDebugSummary.State5Min > dbgtime5){
+                    mDebugSummary.State5Min = dbgtime5;
+                }
+                mDebugSummary.State5Count = mDebugSummary.State5Count + 1;
+
+                State5tmp = State5tmp  + dbgtime5;
+                mDebugSummary.State5Avg = (State5tmp / mDebugSummary.State5Count);
                 break;
         }
+
+        dda.setSummary(mDebugSummary);
     }
 
     public long timeBetween(TimeForState from, TimeForState to){
