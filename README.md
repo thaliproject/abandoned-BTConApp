@@ -41,6 +41,6 @@ Then after we have discovered services around, the list is gone through and firs
 
 In case all devices are found from the list, then the first device on the list (has been longest time since last connection attempt) will be selected and moved to be last item on the list.
 
-By default the list contains 100 items, if more is needed, you would need to change the value used inside the SelectServiceToConnect() function defined in org.thaliproject.p2p.btconnectorlib.WifiBase class
+By default the list contains maximum of 100 items, if more is needed, you would need to change the value used inside the SelectServiceToConnect() function defined in org.thaliproject.p2p.btconnectorlib.WifiBase class
 
 
