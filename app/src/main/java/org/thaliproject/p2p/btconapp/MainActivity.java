@@ -30,7 +30,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         for example after 1 minute.
         The value is determined by mExitWithDelay
         */
-    private int mExitWithDelay = 60; // 60 seconds test before exiting
+    private int mExitWithDelay = 120; // 60 seconds test before exiting
     private boolean mExitWithDelayIsOn = true; // set false if we are not uisng this app for testing
 
     MainActivity that = this;
@@ -62,7 +62,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
             timeCounter = timeCounter + 1;
             String timeShow = "T: " + timeCounter;
 
-            if(mExitWithDelayIsOn) {
+       /*     if(mExitWithDelayIsOn) {
                 //exit timer for testing
                 if (mExitWithDelay > 0) {
                     mExitWithDelay = mExitWithDelay - 1;
@@ -75,7 +75,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                     mExitWithDelayIsOn = false;
                     ShowSummary();
                 }
-            }
+            }*/
 
 
             ((TextView) findViewById(R.id.TimeBox)).setText(timeShow);
@@ -119,6 +119,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
 
         mySpeech = new MyTextSpeech(this);
         mTestDataFile = new TestDataFile(this);
+        mTestDataFile.StartNewFile();
 
         Button btButton = (Button) findViewById(R.id.appToggle);
         btButton.setOnClickListener(new View.OnClickListener() {

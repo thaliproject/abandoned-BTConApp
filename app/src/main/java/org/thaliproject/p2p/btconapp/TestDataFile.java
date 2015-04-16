@@ -16,7 +16,7 @@ import java.io.OutputStream;
  */
 public class TestDataFile {
 
-    private final String fileNameStart = "BTConApp";
+    private final String fileNameStart = "BTTimeTest";
     private final String firstLine= "Os ,Type ,service discovery, Connected ,first data ,GotBigData \n";
 
     long State1 = 0; // FoundPeers, 0
@@ -212,7 +212,7 @@ public class TestDataFile {
             dbgData = dbgData + (State2 - State1) + " ,";
             dbgData = dbgData + (State3 - State2) + " ,";
             dbgData = dbgData + (State4 - State3) + " ,";
-            dbgData = dbgData + (State5 - State4) + " ,";
+            dbgData = dbgData + (State5 - State4) + " \n";
 
             Log.d("FILE", "write: " + dbgData);
             dbgFileOs.write(dbgData.getBytes());
