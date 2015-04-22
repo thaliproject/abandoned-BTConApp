@@ -43,9 +43,9 @@ public class BTListenerThread extends Thread {
                 }
                 if (socket != null) {
                     printe_line("we got incoming connection");
-                    callback.GotConnection(socket);
                     mSocket.close();
                     mStopped = true;
+                    callback.GotConnection(socket);
                 } else if (!mStopped) {
                     callback.ListeningFailed("Socket is null");
                 }

@@ -17,7 +17,7 @@ import java.io.OutputStream;
 public class TestDataFile {
 
     private final String fileNameStart = "BTCAppTTest";
-    private final String firstLine= "Os ,Type ,service discovery, Connected ,first data ,GotBigData \n";
+    private final String firstLine= "Os ,Time ,Type ,service discovery, Connected ,first data ,GotBigData \n";
 
     long State1 = 0; // FoundPeers, 0
     long State2 = 0; // Connecting, 0
@@ -202,6 +202,7 @@ public class TestDataFile {
 
         try {
             String dbgData = Build.VERSION.SDK_INT + " ," ;
+            dbgData = dbgData  + System.currentTimeMillis()+ " ,";
             dbgData = dbgData  + type + " ,";
 
             dbgData = dbgData + (State2 - State1) + " ,";

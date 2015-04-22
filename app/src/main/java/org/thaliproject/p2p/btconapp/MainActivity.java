@@ -60,6 +60,8 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     long wroteDataAmount = 0;
     long gotDataAmount = 0;
 
+    long startTime = 0;
+
     TestDataFile mTestDataFile = null;
 
     private int mInterval = 1000; // 1 second by default, can be changed later
@@ -88,6 +90,18 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                 }
             }*/
 
+            long runTimeSec = ((System.currentTimeMillis() - startTime) / 1000);
+
+            timeShow = timeShow + ", run: ";
+            long hours = (runTimeSec / 3600);
+            timeShow = timeShow + hours + " h, ";
+            runTimeSec = (runTimeSec - (hours * 3600));
+
+            long minutes = (runTimeSec / 60);
+            timeShow = timeShow + minutes + " m, ";
+            runTimeSec = (runTimeSec - (minutes * 60));
+
+            timeShow = timeShow + runTimeSec + " s.";
 
             ((TextView) findViewById(R.id.TimeBox)).setText(timeShow);
             timeHandler.postDelayed(mStatusChecker, mInterval);
@@ -127,6 +141,8 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        startTime = System.currentTimeMillis();
 
         conSettings = new BTConnectorSettings();
         conSettings.SERVICE_TYPE = serviceTypeIdentifier;
@@ -331,14 +347,13 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                         if (mTestDataFile != null) {
                             mTestDataFile.SetTimeNow(TestDataFile.TimeForState.GotData);
                         }
-                        receivingTimeOutBaseTime = System.currentTimeMillis();
+
                         gotFirstMessage = true;
                         print_line("CHAT", "Got message: " + readMessage);
                         if (amIBigSender) {
                             ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xff0000ff); //Blue
                             sayItWithBigBuffer();
                         }
-                        //else we just wait untill we get the big buffer
                     }
                     break;
                 case BTConnectedThread.SOCKET_DISCONNEDTED: {
@@ -382,6 +397,8 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         mBTConnectedThread.start();
 
         if(!amIBigSender) {
+            // we'll start the cancel timer in here
+            receivingTimeOutBaseTime = System.currentTimeMillis();
             // will be waiting for big buffer
             ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xff0000ff); //Blue
             sayHi();

@@ -217,38 +217,38 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     public void Connected(BluetoothSocket socket) {
         //make sure we do not close the socket,
         mBTConnectToThread = null;
+        stopBluetooth();
+        stopServices();
         final BluetoothSocket tmp = socket;
-        mHandler.post(new Runnable() {
+        mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if(tmp.isConnected()) {
-                    stopBluetooth();
-                    stopServices();
                     setState(State.Connected);
                     that.callback.Connected(tmp, false);
                 }else{
                     ConnectionFailed("Disconnected");
                 }
             }
-        });
+        },1000);
     }
 
     @Override
     public void GotConnection(BluetoothSocket socket) {
         final BluetoothSocket tmp = socket;
-        mHandler.post(new Runnable() {
+        stopBluetooth();
+        stopServices();
+        mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if(tmp.isConnected()) {
-                    stopBluetooth();
-                    stopServices();
                     setState(State.Connected);
                     that.callback.Connected(tmp, true);
                 }else{
                     ListeningFailed("Disconnected");
                 }
             }
-        });
+        },1000);
     }
 
     @Override
