@@ -28,6 +28,7 @@ public class WifiServiceSearcher {
     private Context context;
     private BroadcastReceiver receiver;
     private IntentFilter filter;
+    private String SERVICE_TYPE;
 
     private final WifiBase.WifiStatusCallBack callback;
     private WifiP2pManager p2p;
@@ -57,11 +58,12 @@ public class WifiServiceSearcher {
 
     CountDownTimer peerDiscoveryTimer = null;
 
-    public WifiServiceSearcher(Context Context, WifiP2pManager Manager, WifiP2pManager.Channel Channel, WifiBase.WifiStatusCallBack handler) {
+    public WifiServiceSearcher(Context Context, WifiP2pManager Manager, WifiP2pManager.Channel Channel, WifiBase.WifiStatusCallBack handler,String serviceType) {
         this.context = Context;
         this.p2p = Manager;
         this.channel = Channel;
         this.callback = handler;
+        this.SERVICE_TYPE = serviceType;
 
         Random ran = new Random(System.currentTimeMillis());
 
@@ -128,7 +130,7 @@ public class WifiServiceSearcher {
 
                 debug_print("Found Service, :" + instanceName + ", type" + serviceType + ":");
 
-                if (serviceType.startsWith(WifiBase.SERVICE_TYPE)) {
+                if (serviceType.startsWith(SERVICE_TYPE)) {
                     boolean addService = true;
                     for (int i=0; i<myServiceList.size(); i++) {
                         if(myServiceList.get(i).deviceAddress.equals(device.deviceAddress)){
@@ -140,7 +142,7 @@ public class WifiServiceSearcher {
                     }
 
                 } else {
-                    debug_print("Not our Service, :" + WifiBase.SERVICE_TYPE + "!=" + serviceType + ":");
+                    debug_print("Not our Service, :" + SERVICE_TYPE + "!=" + serviceType + ":");
                 }
 
                 ServiceDiscoveryTimeOutTimer.cancel();
@@ -193,7 +195,7 @@ public class WifiServiceSearcher {
 
         myServiceState = ServiceState.DiscoverService;
 
-        WifiP2pDnsSdServiceRequest request = WifiP2pDnsSdServiceRequest.newInstance(WifiBase.SERVICE_TYPE);
+        WifiP2pDnsSdServiceRequest request = WifiP2pDnsSdServiceRequest.newInstance(SERVICE_TYPE);
         final Handler handler = new Handler();
         p2p.addServiceRequest(channel, request, new WifiP2pManager.ActionListener() {
 

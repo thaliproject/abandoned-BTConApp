@@ -19,13 +19,14 @@ public class BTListenerThread extends Thread {
     private final BluetoothServerSocket mSocket;
     boolean mStopped = false;
 
-    public BTListenerThread(BluetoothBase.BluetoothStatusChanged Callback,BluetoothAdapter bta) {
+    public BTListenerThread(BluetoothBase.BluetoothStatusChanged Callback,BluetoothAdapter bta, BTConnectorSettings settings) {
         callback = Callback;
         BluetoothServerSocket tmp = null;
 
         try {
-            tmp = bta.listenUsingInsecureRfcommWithServiceRecord(BluetoothBase.MY_NAME, BluetoothBase.MY_UUID);
+            tmp = bta.listenUsingInsecureRfcommWithServiceRecord(settings.MY_NAME, settings.MY_UUID);
         } catch (IOException e) {
+
             printe_line("listen() failed: " + e.toString());
         }
         mSocket = tmp;
@@ -43,6 +44,8 @@ public class BTListenerThread extends Thread {
                 if (socket != null) {
                     printe_line("we got incoming connection");
                     callback.GotConnection(socket);
+                    mSocket.close();
+                    mStopped = true;
                 } else if (!mStopped) {
                     callback.ListeningFailed("Socket is null");
                 }

@@ -19,9 +19,9 @@ public class BTConnectedThread extends Thread {
     public static final int MESSAGE_WRITE        = 0x22;
     public static final int SOCKET_DISCONNEDTED  = 0x33;
 
-    private final BluetoothSocket mmSocket;
-    private final InputStream mmInStream;
-    private final OutputStream mmOutStream;
+    private BluetoothSocket mmSocket;
+    private InputStream mmInStream;
+    private OutputStream mmOutStream;
     private final Handler mHandler;
 
     final String TAG  = "BTConnectedThread";
@@ -79,12 +79,19 @@ public class BTConnectedThread extends Thread {
         }
     }
     public void Stop() {
-        try {
-            if(mmSocket != null) {
-                mmSocket.close();
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "ConnectedThread  socket close failed: ", e);
+        if (mmInStream != null) {
+            try {mmInStream.close();} catch (Exception e) {}
+            mmInStream = null;
+        }
+
+        if (mmOutStream != null) {
+            try {mmOutStream.close();} catch (Exception e) {}
+            mmOutStream = null;
+        }
+
+        if (mmSocket != null) {
+            try {mmSocket.close();} catch (Exception e) {}
+            mmSocket = null;
         }
     }
 }

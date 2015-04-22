@@ -25,12 +25,12 @@ public class WifiServiceAdvertiser {
     public int GetLastError(){
         return lastError;
     }
-    public void Start(String instance) {
+    public void Start(String instance,String service_type) {
 
         Map<String, String> record = new HashMap<String, String>();
         record.put("available", "visible");
 
-        WifiP2pDnsSdServiceInfo service = WifiP2pDnsSdServiceInfo.newInstance(instance, WifiBase.SERVICE_TYPE, record);
+        WifiP2pDnsSdServiceInfo service = WifiP2pDnsSdServiceInfo.newInstance(instance, service_type, record);
 
         debug_print("Add local service :" + instance);
         p2p.addLocalService(channel, service, new WifiP2pManager.ActionListener() {

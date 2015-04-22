@@ -19,21 +19,32 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import org.thaliproject.p2p.btconnectorlib.BTConnector;
+import org.thaliproject.p2p.btconnectorlib.BTConnectorSettings;
 
 import java.util.Random;
+import java.util.UUID;
 
 
 public class MainActivity extends ActionBarActivity implements BTConnector.Callback {
+
+    MainActivity that = this;
 
     /*
         For End-to-End testing we can use timer here to Stop the process
         for example after 1 minute.
         The value is determined by mExitWithDelay
         */
+
     private int mExitWithDelay = 120; // 60 seconds test before exiting
     private boolean mExitWithDelayIsOn = true; // set false if we are not uisng this app for testing
 
-    MainActivity that = this;
+    final String instanceEncryptionPWD = "CHANGEYOURPASSWRODHERE";
+    final String serviceTypeIdentifier = "_BTCL_p2p._tcp";
+    final String BtUUID                = "fa87c0d0-afac-11de-8a39-0800200c9a66";
+    final String Bt_NAME               = "Thaili_Bluetooth";
+
+    BTConnectorSettings conSettings;
+
     MyTextSpeech mySpeech = null;
 
     int sendMessageCounter = 0;
@@ -42,7 +53,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     int ConnectionCounter = 0;
     int ConCancelCounter = 0;
 
-    boolean iWasBigSender = false;
+
     boolean amIBigSender = false;
     boolean gotFirstMessage = false;
     boolean wroteFirstMessage = false;
@@ -97,7 +108,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
 
             //if the receiving process has taken more than a minute, lets cancel it
             long receivingNow = (System.currentTimeMillis() - receivingTimeOutBaseTime);
-            if(receivingNow > 60000) {
+            if(receivingNow > 30000) {
                 if (mBTConnectedThread != null) {
                     mBTConnectedThread.Stop();
                     mBTConnectedThread = null;
@@ -117,6 +128,11 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        conSettings = new BTConnectorSettings();
+        conSettings.SERVICE_TYPE = serviceTypeIdentifier;
+        conSettings.MY_UUID = UUID.fromString(BtUUID);
+        conSettings.MY_NAME = Bt_NAME;
+
         mySpeech = new MyTextSpeech(this);
         mTestDataFile = new TestDataFile(this);
         mTestDataFile.StartNewFile();
@@ -132,7 +148,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                     mBTConnector = null;
                     ShowSummary();
                 }else{
-                    mBTConnector = new BTConnector(that,that);
+                    mBTConnector = new BTConnector(that,that,instanceEncryptionPWD,conSettings);
                     mBTConnector.Start();
                 }
             }
@@ -156,7 +172,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
             bluetooth.enable();
         }
         //create & start connector
-        mBTConnector = new BTConnector(this,this);
+        mBTConnector = new BTConnector(this,this,instanceEncryptionPWD,conSettings);
         mBTConnector.Start();
     }
 
@@ -186,6 +202,15 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         mTestDataFile = null;
     }
 
+
+    private void SayAck(long gotBytes) {
+        if (mBTConnectedThread != null) {
+            String message = "Got bytes:" + gotBytes;
+            print_line("CHAT", "SayAck: " + message);
+            mBTConnectedThread.write(message.getBytes());
+        }
+    }
+
     private void sayHi() {
         if (mBTConnectedThread != null) {
             String message = "Hello from ";
@@ -196,7 +221,6 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
 
     private void sayItWithBigBuffer() {
         if (mBTConnectedThread != null) {
-            iWasBigSender = true;
             byte[] buffer = new byte[1048576]; //Megabyte buffer
             new Random().nextBytes(buffer);
             print_line("CHAT", "sayItWithBigBuffer");
@@ -210,31 +234,26 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case BTConnectedThread.MESSAGE_WRITE:
-                    if (wroteFirstMessage) {
+                    if (amIBigSender) {
                         timeCounter = 0;
                         wroteDataAmount = wroteDataAmount + msg.arg1;
                         ((TextView) findViewById(R.id.CountBox)).setText("" + wroteDataAmount);
                         if (wroteDataAmount == 1048576) {
                             if (mTestDataFile != null) {
-                                sendMessageCounter = sendMessageCounter+ 1;
+                                // lets do saving after we got ack received
+                                //sendMessageCounter = sendMessageCounter+ 1;
+                                //((TextView) findViewById(R.id.msgSendCount)).setText("" + sendMessageCounter);
                                 mTestDataFile.SetTimeNow(TestDataFile.TimeForState.GoBigtData);
                                 long timeval = mTestDataFile.timeBetween(TestDataFile.TimeForState.GoBigtData, TestDataFile.TimeForState.GotData);
 
                                 final String sayoutloud = "Send megabyte in : " + (timeval / 1000) + " seconds.";
 
-                                if (iWasBigSender) {
-                                    mTestDataFile.WriteDebugline("BigSender");
-                                } else {
-                                    mTestDataFile.WriteDebugline("Receiver");
-                                }
+                                // lets do saving after we got ack received
+                                //mTestDataFile.WriteDebugline("BigSender");
 
                                 print_line("CHAT", sayoutloud);
                                 mySpeech.speak(sayoutloud);
                             }
-                            wroteFirstMessage = false;
-                            gotFirstMessage = false;
-
-                            ((TextView) findViewById(R.id.msgSendCount)).setText("" + sendMessageCounter);
                         }
                     } else {
                         byte[] writeBuf = (byte[]) msg.obj;// construct a string from the buffer
@@ -249,7 +268,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                     }
                     break;
                 case BTConnectedThread.MESSAGE_READ:
-                    if (gotFirstMessage) {
+                    if (!amIBigSender) {
                         gotDataAmount = gotDataAmount + msg.arg1;
                         timeCounter = 0;
                         ((TextView) findViewById(R.id.CountBox)).setText("" + gotDataAmount);
@@ -258,48 +277,55 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                         if (gotDataAmount == 1048576) {
                             BigBufferReceivingTimeOut.cancel();
 
+                            gotFirstMessage = false;
+                            gotMessageCounter = gotMessageCounter+ 1;
+                            ((TextView) findViewById(R.id.msgGotCount)).setText("" + gotMessageCounter);
+
                             if (mTestDataFile != null) {
-                                gotMessageCounter = gotMessageCounter+ 1;
                                 mTestDataFile.SetTimeNow(TestDataFile.TimeForState.GoBigtData);
 
                                 long timeval = mTestDataFile.timeBetween(TestDataFile.TimeForState.GoBigtData, TestDataFile.TimeForState.GotData);
-
                                 final String sayoutloud = "Got megabyte in : " + (timeval / 1000) + " seconds.";
 
-                                if (iWasBigSender) {
-                                    mTestDataFile.WriteDebugline("BigSender");
-                                } else {
-                                    mTestDataFile.WriteDebugline("Receiver");
-                                }
+                                mTestDataFile.WriteDebugline("Receiver");
 
                                 print_line("CHAT", sayoutloud);
                                 mySpeech.speak(sayoutloud);
                             }
 
-                            iWasBigSender = false;
-                            gotFirstMessage = false;
-
-                            ((TextView) findViewById(R.id.msgGotCount)).setText("" + gotMessageCounter);
-
-                            final Handler handler = new Handler();
-                            handler.postDelayed(new Runnable() {
-                                //There are supposedly a possible race-condition bug with the service discovery
-                                // thus to avoid it, we are delaying the service discovery start here
-                                public void run() {
-
-                                    if(mBTConnectedThread != null){
-                                        mBTConnectedThread.Stop();
-                                        mBTConnectedThread = null;
-                                    }
-                                    //Re-start the loop
-                                    if(mBTConnector != null) {
-                                        mBTConnector.Start();
-                                    }
-                                }
-                            }, 1000);
-
+                            //got message
+                            ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xff00ff00); // green
+                            SayAck(gotDataAmount);
                         }
-                    } else {
+                    } else if(gotFirstMessage) {
+                        print_line("CHAT", "we got Ack message back, so lets disconnect.");
+
+                        //got message
+                        ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xff00ff00); // green
+
+                        sendMessageCounter = sendMessageCounter+ 1;
+                        ((TextView) findViewById(R.id.msgSendCount)).setText("" + sendMessageCounter);
+                        if (mTestDataFile != null) {
+                            mTestDataFile.WriteDebugline("BigSender");
+                        }
+                        // we got Ack message back, so lets disconnect
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            //There are supposedly a possible race-condition bug with the service discovery
+                            // thus to avoid it, we are delaying the service discovery start here
+                            public void run() {
+
+                                if(mBTConnectedThread != null){
+                                    mBTConnectedThread.Stop();
+                                    mBTConnectedThread = null;
+                                }
+                                //Re-start the loop
+                                if(mBTConnector != null) {
+                                    mBTConnector.Start();
+                                }
+                            }
+                        }, 1000);
+                    }else{
                         byte[] readBuf = (byte[]) msg.obj;// construct a string from the valid bytes in the buffer
                         String readMessage = new String(readBuf, 0, msg.arg1);
                         if (mTestDataFile != null) {
@@ -307,17 +333,18 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                         }
                         receivingTimeOutBaseTime = System.currentTimeMillis();
                         gotFirstMessage = true;
-                        gotDataAmount = 0;
                         print_line("CHAT", "Got message: " + readMessage);
                         if (amIBigSender) {
-                            amIBigSender = false;
+                            ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xff0000ff); //Blue
                             sayItWithBigBuffer();
-                        } else {
-                            sayHi();
                         }
+                        //else we just wait untill we get the big buffer
                     }
                     break;
                 case BTConnectedThread.SOCKET_DISCONNEDTED: {
+
+                    ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xffcccccc); //light Gray
+
                     if (mBTConnectedThread != null) {
                         mBTConnectedThread.Stop();
                         mBTConnectedThread = null;
@@ -354,7 +381,11 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         mBTConnectedThread = new BTConnectedThread(socket,mHandler);
         mBTConnectedThread.start();
 
-        sayHi();
+        if(!amIBigSender) {
+            // will be waiting for big buffer
+            ((TextView) findViewById(R.id.dataStatusBox)).setBackgroundColor(0xff0000ff); //Blue
+            sayHi();
+        }
     }
 
     public void print_line(String who, String line) {
@@ -388,11 +419,13 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                 ((TextView) findViewById(R.id.statusBox)).setBackgroundColor(0xff00ffff); // Cyan
                 break;
             case FindingServices:
+                ((TextView) findViewById(R.id.statusBox)).setBackgroundColor(0xffffff00); // yellow
                 if(mTestDataFile != null) {
                     mTestDataFile.SetTimeNow(TestDataFile.TimeForState.FoundPeers);
                 }
                 break;
             case Connecting: {
+                    ((TextView) findViewById(R.id.statusBox)).setBackgroundColor(0xffff0000); // red
                     ConAttemptCounter = ConAttemptCounter + 1;
                     ((TextView) findViewById(R.id.conaCount)).setText("" + ConAttemptCounter);
                     if (mTestDataFile != null) {
@@ -401,6 +434,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                 }
                 break;
             case Connected: {
+                    ((TextView) findViewById(R.id.statusBox)).setBackgroundColor(0xff00ff00); // green
                     ConnectionCounter = ConnectionCounter + 1;
                     ((TextView) findViewById(R.id.conCount)).setText("" + ConnectionCounter);
                     if (mTestDataFile != null) {

@@ -17,7 +17,6 @@ import java.util.UUID;
  */
 public class BluetoothBase {
 
-
     public interface  BluetoothStatusChanged{
         public void Connected(BluetoothSocket socket);
         public void GotConnection(BluetoothSocket socket);
@@ -27,8 +26,6 @@ public class BluetoothBase {
     }
 
 
-    public static final UUID MY_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
-    public static final String MY_NAME = "Thaili_Bluetooth";
 
     private BluetoothStatusChanged callBack = null;
     private BluetoothAdapter bluetooth = null;

@@ -58,6 +58,20 @@
             android:weightSum="1"
             android:layout_marginBottom="10dp">
             <TextView
+                android:id="@+id/dataStatusBox"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.0"/>
+        </LinearLayout>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:weightSum="1"
+            android:layout_marginBottom="10dp">
+            <TextView
                 android:id="@+id/remoteHost"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"

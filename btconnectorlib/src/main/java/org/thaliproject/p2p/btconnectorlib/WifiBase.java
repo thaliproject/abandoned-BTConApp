@@ -25,8 +25,6 @@ public class WifiBase implements WifiP2pManager.ChannelListener {
         public void gotServicesList(List<ServiceItem> list);
     }
 
-    public static final String SERVICE_TYPE = "_BTCL_p2p._tcp";
-
     private List<ServiceItem> connectedArray = new ArrayList<ServiceItem>();
     private WifiP2pManager p2p = null;
     private WifiP2pManager.Channel channel = null;

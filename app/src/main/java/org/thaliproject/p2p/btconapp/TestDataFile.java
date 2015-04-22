@@ -16,7 +16,7 @@ import java.io.OutputStream;
  */
 public class TestDataFile {
 
-    private final String fileNameStart = "BTTimeTest";
+    private final String fileNameStart = "BTCAppTTest";
     private final String firstLine= "Os ,Type ,service discovery, Connected ,first data ,GotBigData \n";
 
     long State1 = 0; // FoundPeers, 0
@@ -87,12 +87,10 @@ public class TestDataFile {
 
         switch(state){
             case FoundPeers:
-                ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xffffff00);
                 State1 = System.currentTimeMillis(); // Connecting
                 mDebugSummary.State1Count = mDebugSummary.State1Count + 1;
                 break;
             case Connecting:
-                ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xffff0000);
                 State2 = System.currentTimeMillis(); // Connecting
                 long dbgtime2 = (State2 - State1);
                 if(mDebugSummary.State2Max < dbgtime2){
@@ -108,7 +106,6 @@ public class TestDataFile {
 
                 break;
             case Connected:
-                ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xff00ff00);
                 State3 = System.currentTimeMillis(); // Connected
                 long dbgtime3 = (State3 - State2);
                 if(mDebugSummary.State3Max < dbgtime3){
@@ -123,7 +120,6 @@ public class TestDataFile {
                 mDebugSummary.State3Avg = (State3tmp / mDebugSummary.State3Count);
                 break;
             case GotData:
-                ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xff0000ff);
                 State4 = System.currentTimeMillis(); // GotData
 
                 long dbgtime4 = (State4 - State3);
@@ -139,7 +135,6 @@ public class TestDataFile {
                 mDebugSummary.State4Avg = (State4tmp / mDebugSummary.State4Count);
                 break;
             case GoBigtData:
-                ((TextView) context.findViewById(R.id.statusBox)).setBackgroundColor(0xffffffff);
                 State5 = System.currentTimeMillis(); // GoBigtData
 
                 long dbgtime5 = (State5 - State4);

@@ -15,11 +15,11 @@ public class BTConnectToThread extends Thread {
     private BluetoothBase.BluetoothStatusChanged callback;
     private final BluetoothSocket mSocket;
 
-    public BTConnectToThread(BluetoothBase.BluetoothStatusChanged Callback, BluetoothDevice device) {
+    public BTConnectToThread(BluetoothBase.BluetoothStatusChanged Callback, BluetoothDevice device, BTConnectorSettings settings) {
         callback = Callback;
         BluetoothSocket tmp = null;
         try {
-            tmp = device.createInsecureRfcommSocketToServiceRecord(BluetoothBase.MY_UUID);
+            tmp = device.createInsecureRfcommSocketToServiceRecord(settings.MY_UUID);
         } catch (IOException e) {
             printe_line("createInsecure.. failed: " + e.toString());
         }

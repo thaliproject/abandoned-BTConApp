@@ -9,18 +9,16 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.util.Log;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by juksilve on 13.3.2015.
  */
 public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBase.WifiStatusCallBack{
-
-    //Todo
-    //- Make the WifiBase.SERVICE_TYPE none static, and it should be set by the app using the library
-    //- Add encryption to the BT-Address advertised through the "instance name" in Wifi-Direct local service
 
     BTConnector that = this;
 
@@ -49,6 +47,8 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     BTListenerThread mBTListenerThread = null;
     BTConnectToThread mBTConnectToThread = null;
 
+    AESCrypt mAESCrypt = null;
+
     private Callback callback = null;
     private Context context = null;
     private Handler mHandler = null;
@@ -61,11 +61,25 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
             startAll();
         }
     };
-    public BTConnector(Context Context, Callback Callback){
+
+
+    BTConnectorSettings ConSettings = new BTConnectorSettings();
+
+
+    public BTConnector(Context Context, Callback Callback, String InstancePassword, BTConnectorSettings settings){
         this.context = Context;
         this.callback = Callback;
         this.mHandler = new Handler(this.context.getMainLooper());
         this.myState = State.NotInitialized;
+        this.ConSettings = settings;
+
+
+        try{
+            mAESCrypt = new AESCrypt(InstancePassword);
+        }catch(Exception e){
+            print_line("", "mAESCrypt instance creation failed: " + e.toString());
+            mAESCrypt = null;
+        }
     }
 
     public void Start() {
@@ -116,7 +130,13 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
         String advertLine = "";
 
         if (mBluetoothBase != null) {
-            advertLine = mBluetoothBase.getAddress();
+            if(mAESCrypt != null){
+                try {
+                    advertLine = mAESCrypt.encrypt(mBluetoothBase.getAddress());
+                }catch (Exception e){
+                    print_line("", "mAESCrypt.encrypt failed: " + e.toString());
+                }
+            }
         }
 
         WifiP2pManager.Channel channel = null;
@@ -127,11 +147,12 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
         }
 
         if (channel != null && p2p != null) {
-            print_line("", "Starting services");
-            mWifiAccessPoint = new WifiServiceAdvertiser(p2p, channel);
-            mWifiAccessPoint.Start(advertLine);
+            print_line("", "Starting services address: " + advertLine + " " + ConSettings);
 
-            mWifiServiceSearcher = new WifiServiceSearcher(this.context, p2p, channel, this);
+            mWifiAccessPoint = new WifiServiceAdvertiser(p2p, channel);
+            mWifiAccessPoint.Start(advertLine,ConSettings.SERVICE_TYPE);
+
+            mWifiServiceSearcher = new WifiServiceSearcher(this.context, p2p, channel, this,ConSettings.SERVICE_TYPE);
             mWifiServiceSearcher.Start();
             setState(State.FindingPeers);
         }
@@ -140,7 +161,6 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     private  void stopServices() {
         print_line("", "Stoppingservices");
         setState(State.Idle);
-
         if (mWifiAccessPoint != null) {
             mWifiAccessPoint.Stop();
             mWifiAccessPoint = null;
@@ -161,7 +181,7 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
 
         if (mBTListenerThread == null && tmp != null) {
             print_line("", "StartBluetooth listener");
-            mBTListenerThread = new BTListenerThread(that, tmp);
+            mBTListenerThread = new BTListenerThread(that, tmp,ConSettings);
             mBTListenerThread.start();
         }
     }
@@ -201,10 +221,14 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                stopBluetooth();
-                stopServices();
-                setState(State.Connected);
-                that.callback.Connected(tmp,false);
+                if(tmp.isConnected()) {
+                    stopBluetooth();
+                    stopServices();
+                    setState(State.Connected);
+                    that.callback.Connected(tmp, false);
+                }else{
+                    ConnectionFailed("Disconnected");
+                }
             }
         });
     }
@@ -215,10 +239,14 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                stopBluetooth();
-                stopServices();
-                setState(State.Connected);
-                that.callback.Connected(tmp,true);
+                if(tmp.isConnected()) {
+                    stopBluetooth();
+                    stopServices();
+                    setState(State.Connected);
+                    that.callback.Connected(tmp, true);
+                }else{
+                    ListeningFailed("Disconnected");
+                }
             }
         });
     }
@@ -324,17 +352,26 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
                     ServiceFoundTimeOutTimer.cancel();
                 }
 
-                print_line("", "Selected device address: " + selItem.instanceName);
-                BluetoothDevice device = mBluetoothBase.getRemoteDevice(selItem.instanceName);
+                String AddressLine = new String();
+                if(mAESCrypt != null){
+                    try {
+                        AddressLine = mAESCrypt.decrypt(selItem.instanceName);
+                    }catch (Exception e){
+                        print_line("", "mAESCrypt.decrypt failed: " + e.toString());
+                    }
+                }
 
-                mBTConnectToThread = new BTConnectToThread(that, device);
+                print_line("", "Selected device address: " + AddressLine +  ", from: " + selItem.instanceName);
+
+                BluetoothDevice device = mBluetoothBase.getRemoteDevice(AddressLine);
+
+                mBTConnectToThread = new BTConnectToThread(that, device,ConSettings);
                 mBTConnectToThread.start();
-
-                setState(State.Connecting);
-                print_line("", "Connecting to " + device.getName() + ", at " + device.getAddress());
 
                 //we have connection, no need to find new ones
                 stopServices();
+                setState(State.Connecting);
+                print_line("", "Connecting to " + device.getName() + ", at " + device.getAddress());
             } else {
                 // we'll get discovery stopped event soon enough
                 // and it starts the discovery again, so no worries :)
@@ -355,7 +392,6 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     }
 
     public void print_line(String who, String line) {
-
-        //Log.i("BTConnector" + who, line);
+        Log.i("BTConnector" + who, line);
     }
 }
