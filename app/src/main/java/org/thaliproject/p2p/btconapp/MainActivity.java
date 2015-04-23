@@ -20,12 +20,15 @@ import android.widget.TextView;
 
 import org.thaliproject.p2p.btconnectorlib.BTConnector;
 import org.thaliproject.p2p.btconnectorlib.BTConnectorSettings;
+import org.thaliproject.p2p.btconnectorlib.ServiceItem;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 
-public class MainActivity extends ActionBarActivity implements BTConnector.Callback {
+public class MainActivity extends ActionBarActivity implements BTConnector.Callback, BTConnector.ConnectSelector {
 
     MainActivity that = this;
 
@@ -39,11 +42,16 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     private boolean mExitWithDelayIsOn = true; // set false if we are not uisng this app for testing
 
     final String instanceEncryptionPWD = "CHANGEYOURPASSWRODHERE";
-    final String serviceTypeIdentifier = "_BTCL_p2p._tcp";
+ //   final String serviceTypeIdentifier = "_BTCL_p2p._tcp";
     final String BtUUID                = "fa87c0d0-afac-11de-8a39-0800200c9a66";
     final String Bt_NAME               = "Thaili_Bluetooth";
 
+    //todo remove after tests
+    final String serviceTypeIdentifier = "_HUMPPAA._tcp";
+
+
     BTConnectorSettings conSettings;
+    private List<ServiceItem> connectedArray = new ArrayList<ServiceItem>();
 
     MyTextSpeech mySpeech = null;
 
@@ -164,7 +172,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
                     mBTConnector = null;
                     ShowSummary();
                 }else{
-                    mBTConnector = new BTConnector(that,that,instanceEncryptionPWD,conSettings);
+                    mBTConnector = new BTConnector(that,that,that,conSettings,instanceEncryptionPWD);
                     mBTConnector.Start();
                 }
             }
@@ -188,7 +196,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
             bluetooth.enable();
         }
         //create & start connector
-        mBTConnector = new BTConnector(this,this,instanceEncryptionPWD,conSettings);
+        mBTConnector = new BTConnector(this,this,this,conSettings,instanceEncryptionPWD);
         mBTConnector.Start();
     }
 
@@ -462,6 +470,62 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
         }
 
         print_line("STATE", "New state: " + newState);
+    }
+
+    @Override
+    public ServiceItem SelectServiceToConnect(List<ServiceItem> available) {
+        ServiceItem  ret = null;
+
+        if(connectedArray.size() > 0 && available.size() > 0) {
+
+            int firstNewMatch = -1;
+            int firstOldMatch = -1;
+
+            for (int i = 0; i < available.size(); i++) {
+                if(firstNewMatch >= 0) {
+                    break;
+                }
+                for (int ii = 0; ii < connectedArray.size(); ii++) {
+                    if (available.get(i).deviceAddress.equals(connectedArray.get(ii).deviceAddress)) {
+                        if(firstOldMatch < 0 || firstOldMatch > ii){
+                            //find oldest one available that we have connected previously
+                            firstOldMatch = ii;
+                        }
+                        firstNewMatch = -1;
+                        break;
+                    } else {
+                        if (firstNewMatch < 0) {
+                            firstNewMatch = i; // select first not connected device
+                        }
+                    }
+                }
+            }
+
+            if (firstNewMatch >= 0){
+                ret = available.get(firstNewMatch);
+            }else if(firstOldMatch >= 0){
+                ret = connectedArray.get(firstOldMatch);
+                // we move this to last position
+                connectedArray.remove(firstOldMatch);
+            }
+
+            //print_line("EEE", "firstNewMatch " + firstNewMatch + ", firstOldMatch: " + firstOldMatch);
+
+        }else if(available.size() > 0){
+            ret = available.get(0);
+        }
+        if(ret != null){
+            connectedArray.add(ret);
+
+            // just to set upper limit for the amount of remembered contacts
+            // when we have 101, we remove the oldest (that's the top one)
+            // from the array
+            if(connectedArray.size() > 100){
+                connectedArray.remove(0);
+            }
+        }
+
+        return ret;
     }
 }
 

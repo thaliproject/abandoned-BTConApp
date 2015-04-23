@@ -13,7 +13,6 @@ import android.util.Log;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Created by juksilve on 13.3.2015.
@@ -37,6 +36,10 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
         public void StateChanged(State newState);
     }
 
+    public interface  ConnectSelector{
+        public ServiceItem SelectServiceToConnect(List<ServiceItem> available);
+    }
+
     private State myState = State.NotInitialized;
 
     WifiBase mWifiBase = null;
@@ -46,10 +49,12 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     BluetoothBase mBluetoothBase = null;
     BTListenerThread mBTListenerThread = null;
     BTConnectToThread mBTConnectToThread = null;
+    BTHandShaker mBTHandShaker = null;
 
     AESCrypt mAESCrypt = null;
 
     private Callback callback = null;
+    private ConnectSelector connectSelector = null;
     private Context context = null;
     private Handler mHandler = null;
 
@@ -66,13 +71,13 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     BTConnectorSettings ConSettings = new BTConnectorSettings();
 
 
-    public BTConnector(Context Context, Callback Callback, String InstancePassword, BTConnectorSettings settings){
+    public BTConnector(Context Context, Callback Callback, ConnectSelector selector, BTConnectorSettings settings, String InstancePassword){
         this.context = Context;
         this.callback = Callback;
         this.mHandler = new Handler(this.context.getMainLooper());
         this.myState = State.NotInitialized;
         this.ConSettings = settings;
-
+        this.connectSelector = selector;
 
         try{
             mAESCrypt = new AESCrypt(InstancePassword);
@@ -188,6 +193,12 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
 
     private  void stopBluetooth() {
         print_line("", "Stop Bluetooth");
+
+        if(mBTHandShaker != null){
+            mBTHandShaker.Stop();
+            mBTHandShaker = null;
+        }
+
         if (mBTListenerThread != null) {
             mBTListenerThread.Stop();
             mBTListenerThread = null;
@@ -216,39 +227,82 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     @Override
     public void Connected(BluetoothSocket socket) {
         //make sure we do not close the socket,
-        mBTConnectToThread = null;
-        stopBluetooth();
-        stopServices();
-        final BluetoothSocket tmp = socket;
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if(tmp.isConnected()) {
-                    setState(State.Connected);
-                    that.callback.Connected(tmp, false);
-                }else{
-                    ConnectionFailed("Disconnected");
+        if(mBTHandShaker == null) {
+
+            final BluetoothSocket tmp = socket;
+            mBTConnectToThread = null;
+            stopBluetooth();
+            stopServices();
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mBTHandShaker = new BTHandShaker(tmp, that, true);
+                    mBTHandShaker.Start();
                 }
-            }
-        },1000);
+            });
+        }
     }
 
     @Override
     public void GotConnection(BluetoothSocket socket) {
+        if(mBTHandShaker == null) {
+            final BluetoothSocket tmp = socket;
+            stopBluetooth();
+            stopServices();
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mBTHandShaker = new BTHandShaker(tmp, that, false);
+                    mBTHandShaker.Start();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void HandShakeOk(BluetoothSocket socket, boolean incoming) {
         final BluetoothSocket tmp = socket;
-        stopBluetooth();
-        stopServices();
-        mHandler.postDelayed(new Runnable() {
+        final boolean incomingTmp = incoming;
+
+        print_line("HS", "HandShakeOk for incoming = " + incoming);
+
+
+        if(mBTHandShaker != null) {
+            mBTHandShaker.Stop();
+            mBTHandShaker = null;
+        }
+
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if(tmp.isConnected()) {
+                if (tmp.isConnected()) {
                     setState(State.Connected);
-                    that.callback.Connected(tmp, true);
-                }else{
-                    ListeningFailed("Disconnected");
+                    that.callback.Connected(tmp, incomingTmp);
+                } else {
+                    if(incomingTmp) {
+                        ListeningFailed("Disconnected");
+                    }else{
+                        ConnectionFailed("Disconnected");
+                    }
                 }
             }
-        },1000);
+        });
+    }
+
+    @Override
+    public void HandShakeFailed(String reason, boolean incoming) {
+
+        print_line("HS", "HandShakeFailed: " + reason);
+
+        //only care if we have not stoppeed & nulled the instance
+        if(mBTHandShaker != null) {
+            mBTHandShaker.tryCloseSocket();
+            mBTHandShaker.Stop();
+            mBTHandShaker = null;
+
+            startServices();
+            startBluetooth();
+        }
     }
 
     @Override
@@ -259,12 +313,13 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
             public void run() {
                 print_line("CONNEC", "Error: " + tmp);
 
+                //only care if we have not stoppeed & nulled the instance
                 if (mBTConnectToThread != null) {
                     mBTConnectToThread.Stop();
                     mBTConnectToThread = null;
-                }
 
-                startServices();
+                    startServices();
+                }
             }
         });
     }
@@ -277,12 +332,13 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
             public void run() {
                 print_line("LISTEN", "Error: " + tmp);
 
+                //only care if we have not stoppeed & nulled the instance
                 if (mBTListenerThread != null) {
                     mBTListenerThread.Stop();
                     mBTListenerThread = null;
-                }
 
-                startBluetooth();
+                    startBluetooth();
+                }
             }
         });
     }
@@ -302,6 +358,8 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
             }
         }
     }
+
+
 
     @Override
     public void WifiStateChanged(int state) {
@@ -340,7 +398,15 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     public void gotServicesList(List<ServiceItem> list) {
         if(mWifiBase != null && list != null && list.size() > 0) {
 
-            ServiceItem selItem = mWifiBase.SelectServiceToConnect(list);
+            ServiceItem selItem = null;
+
+            if(this.connectSelector != null){
+                selItem = this.connectSelector.SelectServiceToConnect(list);
+            }else
+            {
+                selItem = mWifiBase.SelectServiceToConnect(list);
+            }
+
             if (selItem != null && mBluetoothBase != null) {
 
                 if (mBTConnectToThread != null) {

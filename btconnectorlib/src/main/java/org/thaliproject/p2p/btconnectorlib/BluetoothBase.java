@@ -23,6 +23,8 @@ public class BluetoothBase {
         public void ConnectionFailed(String reason);
         public void ListeningFailed(String reason);
         public void BluetoothStateChanged(int state);
+        public void HandShakeOk(BluetoothSocket socket, boolean incoming);
+        public void HandShakeFailed(String reason, boolean incoming);
     }
 
 

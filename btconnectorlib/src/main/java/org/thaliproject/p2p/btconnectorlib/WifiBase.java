@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by juksilve on 6.3.2015.
  */
-public class WifiBase implements WifiP2pManager.ChannelListener {
+public class WifiBase implements WifiP2pManager.ChannelListener{
 
     public interface  WifiStatusCallBack{
         public void WifiStateChanged(int state);
@@ -92,7 +92,8 @@ public class WifiBase implements WifiP2pManager.ChannelListener {
         // we might need to do something in here !
     }
 
-    public ServiceItem SelectServiceToConnect(List<ServiceItem> available){
+
+    public ServiceItem SelectServiceToConnect(List<ServiceItem> available) {
 
         ServiceItem  ret = null;
 
