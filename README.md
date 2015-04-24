@@ -5,7 +5,13 @@ Android p2p Library, using Wifi Direct for discovery, and Bluetooth for Communic
 
 Include the BtConnectorLib in your application, create an instance of the  org.thaliproject.p2p.btconnectorlib.BTConnector class.
 
-The constructor takes two arguments, Context Context, Callback Callback, where the Context is normal application context, and the Callback is interface that implements two functions.
+The constructor takes five arguments, Context,  Callback, Selector, settings and InstancePassword. In where the Context is normal application context, and the Callback is interface that implements two functions. 
+
+The Selector is other callback interface, which can be set to null as well. it is set if the application wants to get knowledge on the services discovered and wants to implement selection of the device which the connection is to be made to. If null vale is set, then the library will use its own default scheduler for device selection for connections.
+
+Settings argument will be instance of BTConnectorSettings, which with the application will tell the library the SERVICE_TYPE used with Wifi Direct services, the UUID used with Blue tooth connections as well as String to be used as a name for Blue tooth.
+
+The InstancePassword is then used for encrypting the instance name variable used for delivering the Blue tooth address information, so it would be not directly human readable.
 
 To start the discovery process, you need to call Start() for the instance. And if you need to stop the library, then call Stop().
 
@@ -27,13 +33,12 @@ void StateChanged(State newState) function is called by the library when interna
 
 # things to do 
 
-Each application using the library, should change the SERVICE_TYPE defined inside org.thaliproject.p2p.btconnectorlib.WifiBase to unique for the application.
+Each application using the library, should use their own unique SERVICE_TYPE as well as set own unique InstancePassword, simply to avoid conflicts with other applications using the library.
 
-This is needed to make sure that connections are only made between instances of the application.
 
 # Note
 
-The library is making the connections automatically, and it is trying to make connections to devices which have not had connections before. 
+If the Selector interface is set to null, then the library will be making connections automatically, and it is trying to make connections to devices which have not had connections before. 
 
 This feature is implemented by storing information of each attempted connection into a list inside org.thaliproject.p2p.btconnectorlib.WifiBase class.
 
