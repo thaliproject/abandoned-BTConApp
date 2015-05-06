@@ -13,8 +13,8 @@ import java.util.Map;
  */
 public class WifiServiceAdvertiser {
 
-    private WifiP2pManager p2p;
-    private WifiP2pManager.Channel channel;
+    private final WifiP2pManager p2p;
+    private final WifiP2pManager.Channel channel;
 
     int lastError = -1;
     public WifiServiceAdvertiser(WifiP2pManager Manager, WifiP2pManager.Channel Channel) {
@@ -27,7 +27,7 @@ public class WifiServiceAdvertiser {
     }
     public void Start(String instance,String service_type) {
 
-        Map<String, String> record = new HashMap<String, String>();
+        Map<String, String> record = new HashMap<>();
         record.put("available", "visible");
 
         WifiP2pDnsSdServiceInfo service = WifiP2pDnsSdServiceInfo.newInstance(instance, service_type, record);

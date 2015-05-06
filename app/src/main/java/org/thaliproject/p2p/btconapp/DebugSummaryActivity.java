@@ -1,7 +1,5 @@
 package org.thaliproject.p2p.btconapp;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.widget.TextView;

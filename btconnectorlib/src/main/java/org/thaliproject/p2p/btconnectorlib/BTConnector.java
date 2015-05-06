@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBase.WifiStatusCallBack{
 
-    BTConnector that = this;
+    final BTConnector that = this;
 
     public enum State{
         Idle,
@@ -32,12 +32,12 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     }
 
     public interface  Callback{
-        public void Connected(BluetoothSocket socket, boolean incoming);
-        public void StateChanged(State newState);
+        void Connected(BluetoothSocket socket, boolean incoming);
+        void StateChanged(State newState);
     }
 
     public interface  ConnectSelector{
-        public ServiceItem SelectServiceToConnect(List<ServiceItem> available);
+        ServiceItem SelectServiceToConnect(List<ServiceItem> available);
     }
 
     private State myState = State.NotInitialized;
@@ -58,7 +58,7 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     private Context context = null;
     private Handler mHandler = null;
 
-    CountDownTimer ServiceFoundTimeOutTimer = new CountDownTimer(600000, 1000) {
+    final CountDownTimer ServiceFoundTimeOutTimer = new CountDownTimer(600000, 1000) {
         public void onTick(long millisUntilFinished) {
             // not using
         }
@@ -71,11 +71,11 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
     BTConnectorSettings ConSettings = new BTConnectorSettings();
 
 
-    public BTConnector(Context Context, Callback Callback, ConnectSelector selector, BTConnectorSettings settings, String InstancePassword){
+    public BTConnector(Context Context, Callback Callback, ConnectSelector selector, BTConnectorSettings settings,
+                       String InstancePassword){
         this.context = Context;
         this.callback = Callback;
         this.mHandler = new Handler(this.context.getMainLooper());
-        this.myState = State.NotInitialized;
         this.ConSettings = settings;
         this.connectSelector = selector;
 
@@ -89,7 +89,7 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
 
     public void Start() {
         //initialize the system, and
-        // make sure BT & Wifi is enabled before we start running
+        // make sure BT & Wifi are enabled before we start running
         if(mBluetoothBase != null){
             mBluetoothBase.Stop();
             mBluetoothBase = null;
@@ -108,10 +108,10 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
             print_line("", "BT available: " + btOk + ", wifi available: " + WifiOk);
             setState(State.NotInitialized);
         } else if (mBluetoothBase.isBluetoothEnabled() && mWifiBase.isWifiEnabled()) {
-             print_line("", "All stuf available and enabled");
+             print_line("", "All stuff available and enabled");
              startAll();
         }else{
-            //we wait untill both Wifi & BT are turned on
+            //we wait until both Wifi & BT are turned on
             setState(State.WaitingStateChange);
         }
     }
@@ -418,7 +418,7 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
                     ServiceFoundTimeOutTimer.cancel();
                 }
 
-                String AddressLine = new String();
+                String AddressLine = "";
                 if(mAESCrypt != null){
                     try {
                         AddressLine = mAESCrypt.decrypt(selItem.instanceName);
@@ -446,13 +446,11 @@ public class BTConnector implements BluetoothBase.BluetoothStatusChanged, WifiBa
         }
     }
 
-    private void setState(State newState) {
-        final State tmpState = newState;
-        myState = tmpState;
+    private void setState(final State newState) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                that.callback.StateChanged(tmpState);
+                that.callback.StateChanged(newState);
             }
         });
     }

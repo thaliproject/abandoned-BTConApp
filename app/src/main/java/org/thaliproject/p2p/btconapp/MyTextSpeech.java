@@ -7,7 +7,7 @@ import android.speech.tts.TextToSpeech;
 import java.util.Locale;
 
 public class MyTextSpeech implements TextToSpeech.OnInitListener {
-    private TextToSpeech _tts;
+    private final TextToSpeech _tts;
 
 
     public MyTextSpeech(Context context) {

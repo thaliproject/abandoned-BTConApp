@@ -25,15 +25,13 @@ import static android.net.wifi.p2p.WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION;
 
 public class WifiServiceSearcher {
 
-    private Context context;
+    private final Context context;
     private BroadcastReceiver receiver;
-    private IntentFilter filter;
-    private String SERVICE_TYPE;
+    private final String SERVICE_TYPE;
 
     private final WifiBase.WifiStatusCallBack callback;
-    private WifiP2pManager p2p;
-    private WifiP2pManager.Channel channel;
-    private WifiP2pManager.DnsSdServiceResponseListener serviceListener;
+    private final WifiP2pManager p2p;
+    private final WifiP2pManager.Channel channel;
     private WifiP2pManager.PeerListListener peerListListener;
 
     enum ServiceState{
@@ -44,9 +42,9 @@ public class WifiServiceSearcher {
     ServiceState myServiceState = ServiceState.NONE;
 
 
-    List<ServiceItem> myServiceList = new ArrayList<ServiceItem>();
+    final List<ServiceItem> myServiceList = new ArrayList<>();
 
-    CountDownTimer ServiceDiscoveryTimeOutTimer = new CountDownTimer(60000, 1000) {
+    final CountDownTimer ServiceDiscoveryTimeOutTimer = new CountDownTimer(60000, 1000) {
         public void onTick(long millisUntilFinished) {
             // not using
         }
@@ -95,7 +93,7 @@ public class WifiServiceSearcher {
     public void Start() {
 
         receiver = new ServiceSearcherReceiver();
-        filter = new IntentFilter();
+        IntentFilter filter = new IntentFilter();
         filter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
         filter.addAction(WIFI_P2P_PEERS_CHANGED_ACTION);
 
@@ -124,7 +122,7 @@ public class WifiServiceSearcher {
             }
         };
 
-        serviceListener = new WifiP2pManager.DnsSdServiceResponseListener() {
+        WifiP2pManager.DnsSdServiceResponseListener serviceListener = new WifiP2pManager.DnsSdServiceResponseListener() {
 
             public void onDnsSdServiceAvailable(String instanceName, String serviceType, WifiP2pDevice device) {
 
@@ -132,13 +130,13 @@ public class WifiServiceSearcher {
 
                 if (serviceType.startsWith(SERVICE_TYPE)) {
                     boolean addService = true;
-                    for (int i=0; i<myServiceList.size(); i++) {
-                        if(myServiceList.get(i).deviceAddress.equals(device.deviceAddress)){
+                    for (ServiceItem aMyServiceList : myServiceList) {
+                        if (aMyServiceList.deviceAddress.equals(device.deviceAddress)) {
                             addService = false;
                         }
                     }
-                    if(addService) {
-                        myServiceList.add(new ServiceItem(instanceName, serviceType, device.deviceAddress,device.deviceName));
+                    if (addService) {
+                        myServiceList.add(new ServiceItem(instanceName, serviceType, device.deviceAddress, device.deviceName));
                     }
 
                 } else {

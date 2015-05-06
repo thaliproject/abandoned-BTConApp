@@ -5,7 +5,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.text.format.Time;
 import android.util.Log;
-import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,7 +41,7 @@ public class TestDataFile {
 
     private File dbgFile;
     private OutputStream dbgFileOs;
-    private MainActivity context;
+    private final MainActivity context;
 
     public TestDataFile(MainActivity Context){
         this.context = Context;
@@ -53,7 +52,10 @@ public class TestDataFile {
         Time t= new Time();
         t.setToNow();
 
-        File path = this.context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        // We are using DIRECTORY_DOWNLOADS rather than DIRECTORY_DOCUMENTS because
+        // directory document is only supported in API 19 and we want to test on an 18
+        // device.
+        File path = this.context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
 
         String sFileName =  "/" + fileNameStart + t.yearDay + t.hour+ t.minute + t.second + ".txt";
 

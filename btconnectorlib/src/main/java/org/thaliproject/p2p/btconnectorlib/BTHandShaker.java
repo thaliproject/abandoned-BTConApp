@@ -6,11 +6,6 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.widget.TextView;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * Created by juksilve on 11.3.2015.
@@ -18,16 +13,16 @@ import java.io.OutputStream;
 
 public class BTHandShaker {
 
-    private BluetoothSocket mmSocket;
-    private BluetoothBase.BluetoothStatusChanged callback;
-    private boolean isIncoming;
+    private final BluetoothSocket mmSocket;
+    private final BluetoothBase.BluetoothStatusChanged callback;
+    private final boolean isIncoming;
 
-    String handShakeBuf = "handshake";
-    String shakeBackBuf = "shakehand";
+    final String handShakeBuf = "handshake";
+    final String shakeBackBuf = "shakehand";
 
     BTHandShakeSocketTread mBTHandShakeSocketTread = null;
 
-    CountDownTimer HandShakeTimeOutTimer = new CountDownTimer(4000, 1000) {
+    final CountDownTimer HandShakeTimeOutTimer = new CountDownTimer(4000, 1000) {
         public void onTick(long millisUntilFinished) {
             // not using
         }
@@ -37,14 +32,14 @@ public class BTHandShaker {
     };
 
     public BTHandShaker(BluetoothSocket socket, BluetoothBase.BluetoothStatusChanged Callback, boolean incoming) {
-        printe_line("Creating BTHandShaker");
+        print_line("Creating BTHandShaker");
         callback = Callback;
         mmSocket = socket;
         isIncoming = incoming;
     }
 
     public void Start() {
-        printe_line("Start");
+        print_line("Start");
         HandShakeTimeOutTimer.start();
 
         mBTHandShakeSocketTread = new BTHandShakeSocketTread(mmSocket,mHandler);
@@ -62,14 +57,14 @@ public class BTHandShaker {
     }
 
     public void Stop() {
-        printe_line("Stop");
+        print_line("Stop");
         HandShakeTimeOutTimer.cancel();
         if(mBTHandShakeSocketTread != null){
             mBTHandShakeSocketTread = null;
         }
     }
 
-    private void printe_line(String message){
+    private void print_line(String message){
            Log.d("BTHandShaker",  "BTHandShaker: " + message);
     }
 
@@ -80,14 +75,14 @@ public class BTHandShaker {
             if (mBTHandShakeSocketTread != null) {
                 switch (msg.what) {
                     case BTHandShakeSocketTread.MESSAGE_WRITE: {
-                        printe_line("MESSAGE_WRITE " + msg.arg1 + " bytes.");
+                        print_line("MESSAGE_WRITE " + msg.arg1 + " bytes.");
                         if (isIncoming) {
                             callback.HandShakeOk(mmSocket, isIncoming);
                         }
                     }
                     break;
                     case BTHandShakeSocketTread.MESSAGE_READ: {
-                        printe_line("got MESSAGE_READ " + msg.arg1 + " bytes.");
+                        print_line("got MESSAGE_READ " + msg.arg1 + " bytes.");
                         if (isIncoming) {
                             mBTHandShakeSocketTread.write(shakeBackBuf.getBytes());
                         } else {
@@ -102,7 +97,7 @@ public class BTHandShaker {
                     break;
                 }
             } else {
-                printe_line("handleMessage called for NULL thread handler");
+                print_line("handleMessage called for NULL thread handler");
             }
         }
     };

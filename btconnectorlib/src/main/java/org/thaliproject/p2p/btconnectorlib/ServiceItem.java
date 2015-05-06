@@ -12,8 +12,8 @@ public class ServiceItem{
         this.deviceAddress = address;
         this.deviceName =  name;
     }
-    public String instanceName;
-    public String serviceType;
-    public String deviceAddress;
-    public String deviceName;
+    public final String instanceName;
+    public final String serviceType;
+    public final String deviceAddress;
+    public final String deviceName;
 }

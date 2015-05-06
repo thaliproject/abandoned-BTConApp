@@ -20,19 +20,18 @@ import java.util.List;
 public class WifiBase implements WifiP2pManager.ChannelListener{
 
     public interface  WifiStatusCallBack{
-        public void WifiStateChanged(int state);
-        public void gotPeersList(Collection<WifiP2pDevice> list);
-        public void gotServicesList(List<ServiceItem> list);
+        void WifiStateChanged(int state);
+        void gotPeersList(Collection<WifiP2pDevice> list);
+        void gotServicesList(List<ServiceItem> list);
     }
 
-    private List<ServiceItem> connectedArray = new ArrayList<ServiceItem>();
+    private final List<ServiceItem> connectedArray = new ArrayList<>();
     private WifiP2pManager p2p = null;
     private WifiP2pManager.Channel channel = null;
-    private Context context;
+    private final Context context;
 
-    WifiStatusCallBack callback;
+    final WifiStatusCallBack callback;
     MainBCReceiver mBRReceiver;
-    private IntentFilter filter;
 
     public WifiBase(Context Context, WifiStatusCallBack handler){
         this.context = Context;
@@ -44,7 +43,7 @@ public class WifiBase implements WifiP2pManager.ChannelListener{
         boolean ret =false;
 
         mBRReceiver = new MainBCReceiver();
-        filter = new IntentFilter();
+        IntentFilter filter = new IntentFilter();
         filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         this.context.registerReceiver((mBRReceiver), filter);
 
@@ -69,22 +68,14 @@ public class WifiBase implements WifiP2pManager.ChannelListener{
         return p2p;
     }
 
-    public boolean isWifiEnabled(){
+    public boolean isWifiEnabled() {
         WifiManager wifiManager = (WifiManager) this.context.getSystemService(Context.WIFI_SERVICE);
-        if(wifiManager != null) {
-            return wifiManager.isWifiEnabled();
-        }else{
-            return false;
-        }
+        return wifiManager != null && wifiManager.isWifiEnabled();
     }
 
-    public boolean setWifiEnabled(boolean enabled){
+    public boolean setWifiEnabled(boolean enabled) {
         WifiManager wifiManager = (WifiManager) this.context.getSystemService(Context.WIFI_SERVICE);
-        if(wifiManager != null) {
-            return wifiManager.setWifiEnabled(enabled);
-        }else{
-            return false;
-        }
+        return wifiManager != null && wifiManager.setWifiEnabled(enabled);
     }
 
     @Override
