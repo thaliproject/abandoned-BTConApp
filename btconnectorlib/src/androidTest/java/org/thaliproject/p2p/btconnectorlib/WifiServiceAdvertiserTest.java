@@ -8,8 +8,6 @@ import android.test.InstrumentationTestCase;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by juksilve on 1.4.2015.

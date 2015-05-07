@@ -2,8 +2,6 @@ package org.thaliproject.p2p.btconapp;
 
 import android.app.Application;
 
-import java.util.ArrayList;
-
 /**
  * Created by juksilve on 2.4.2015.
  */

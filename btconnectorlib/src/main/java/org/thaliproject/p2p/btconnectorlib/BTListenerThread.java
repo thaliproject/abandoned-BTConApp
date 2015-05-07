@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class BTListenerThread extends Thread {
 
-    private BluetoothBase.BluetoothStatusChanged callback;
+    private final BluetoothBase.BluetoothStatusChanged callback;
     private final BluetoothServerSocket mSocket;
     boolean mStopped = false;
 

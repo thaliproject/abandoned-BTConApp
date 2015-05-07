@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft. All Rights Reserved. Licensed under the MIT License. See license.txt in the project root for further information.
 package org.thaliproject.p2p.btconapp;
 
-import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
@@ -30,7 +29,7 @@ import java.util.UUID;
 
 public class MainActivity extends ActionBarActivity implements BTConnector.Callback, BTConnector.ConnectSelector {
 
-    MainActivity that = this;
+    final MainActivity that = this;
 
     /*
         For End-to-End testing we can use timer here to Stop the process
@@ -41,7 +40,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     private int mExitWithDelay = 120; // 60 seconds test before exiting
     private boolean mExitWithDelayIsOn = true; // set false if we are not uisng this app for testing
 
-    final String instanceEncryptionPWD = "CHANGEYOURPASSWRODHERE";
+    final String instanceEncryptionPWD = "CHANGEYOURPASSWORDHERE";
  //   final String serviceTypeIdentifier = "_BTCL_p2p._tcp";
     final String BtUUID                = "fa87c0d0-afac-11de-8a39-0800200c9a66";
     final String Bt_NAME               = "Thaili_Bluetooth";
@@ -51,7 +50,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
 
 
     BTConnectorSettings conSettings;
-    private List<ServiceItem> connectedArray = new ArrayList<ServiceItem>();
+    private final List<ServiceItem> connectedArray = new ArrayList<>();
 
     MyTextSpeech mySpeech = null;
 
@@ -72,10 +71,10 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
 
     TestDataFile mTestDataFile = null;
 
-    private int mInterval = 1000; // 1 second by default, can be changed later
+    private final int mInterval = 1000; // 1 second by default, can be changed later
     private Handler timeHandler;
     private int timeCounter = 0;
-    Runnable mStatusChecker = new Runnable() {
+    final Runnable mStatusChecker = new Runnable() {
         @Override
         public void run() {
 
@@ -122,7 +121,7 @@ public class MainActivity extends ActionBarActivity implements BTConnector.Callb
     PowerManager.WakeLock mWakeLock = null;
 
     long receivingTimeOutBaseTime = 0;
-    CountDownTimer BigBufferReceivingTimeOut = new CountDownTimer(2000, 500) {
+    final CountDownTimer BigBufferReceivingTimeOut = new CountDownTimer(2000, 500) {
         public void onTick(long millisUntilFinished) {
             // not using
         }

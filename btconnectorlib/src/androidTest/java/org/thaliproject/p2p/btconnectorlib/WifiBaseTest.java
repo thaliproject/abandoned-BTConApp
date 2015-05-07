@@ -1,6 +1,5 @@
 package org.thaliproject.p2p.btconnectorlib;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -102,7 +101,7 @@ public class WifiBaseTest extends InstrumentationTestCase {
         WifiBase wwBase = new WifiBase(getInstrumentation().getContext(), null);
         assertNotNull(wwBase);
 
-        List<ServiceItem> myServiceList = new ArrayList<ServiceItem>();
+        List<ServiceItem> myServiceList = new ArrayList<>();
         ServiceItem First = new ServiceItem("First", "my type", "0000111100001111","First");
         myServiceList.add(First);
         ServiceItem Second = new ServiceItem("Second","my type", "2222111122221111","Second");

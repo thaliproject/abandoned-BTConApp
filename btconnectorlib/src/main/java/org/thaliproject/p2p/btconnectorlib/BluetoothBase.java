@@ -10,31 +10,26 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import java.util.UUID;
-
 /**
  * Created by juksilve on 6.3.2015.
  */
 public class BluetoothBase {
 
     public interface  BluetoothStatusChanged{
-        public void Connected(BluetoothSocket socket);
-        public void GotConnection(BluetoothSocket socket);
-        public void ConnectionFailed(String reason);
-        public void ListeningFailed(String reason);
-        public void BluetoothStateChanged(int state);
-        public void HandShakeOk(BluetoothSocket socket, boolean incoming);
-        public void HandShakeFailed(String reason, boolean incoming);
+        void Connected(BluetoothSocket socket);
+        void GotConnection(BluetoothSocket socket);
+        void ConnectionFailed(String reason);
+        void ListeningFailed(String reason);
+        void BluetoothStateChanged(int state);
+        void HandShakeOk(BluetoothSocket socket, boolean incoming);
+        void HandShakeFailed(String reason, boolean incoming);
     }
-
-
 
     private BluetoothStatusChanged callBack = null;
     private BluetoothAdapter bluetooth = null;
 
     private BtBrowdCastReceiver receiver = null;
-    private IntentFilter filter;
-    private Context context;
+    private final Context context;
 
     public BluetoothBase(Context Context, BluetoothStatusChanged handler) {
         this.context = Context;
@@ -52,7 +47,7 @@ public class BluetoothBase {
             Log.d("", "My BT: " + bluetooth.getAddress() + " : " + bluetooth.getName() + " , state: " + bluetooth.getState());
 
             receiver = new BtBrowdCastReceiver();
-            filter = new IntentFilter();
+            IntentFilter filter = new IntentFilter();
             filter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
             this.context.registerReceiver(receiver, filter);
         }
@@ -74,11 +69,7 @@ public class BluetoothBase {
     }
 
     public boolean isBluetoothEnabled() {
-        if (bluetooth != null) {
-            return bluetooth.isEnabled();
-        } else {
-            return false;
-        }
+        return bluetooth != null && bluetooth.isEnabled();
     }
 
     public BluetoothAdapter getAdapter(){
